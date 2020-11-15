@@ -1,0 +1,55 @@
+# importing the newsapi module
+from newsapi import NewsApiClient
+
+# entering the api_key
+newsapi = NewsApiClient(api_key='ea158d6478e048ab8d5d7c3272eb34be')
+
+# fetching the previous date so that we can get the news artciles of precious date
+from datetime import datetime
+from datetime import timedelta
+date = (datetime.today()).date()
+date = date - timedelta(days = 1)
+date = datetime.strftime(date, '%Y-%m-%d')
+date
+
+# extracting daily news of Apple Inc.
+articles = []
+all_articles = newsapi.get_everything(q='Apple',
+                                      sources='cnbc',
+                                      domains='www.cnbc.com',
+                                      from_param=date,
+                                      to=date,
+                                      language='en',
+                                      sort_by='relevancy',
+                                      page=1)
+
+# fecthing the titles of articles
+for i in range(all_articles['totalResults']):
+    articles.append(all_articles['articles'][i])
+
+# creating the arrays of date and articles to add to the csv file
+import numpy as np
+Date = np.empty((len(articles)), dtype = object)
+News = np.empty((len(articles)), dtype = object)
+for i in range(len(articles)):
+    Date[i] = articles[i]['publishedAt'][:10]
+    News[i] = articles[i]['title']
+print(Date)
+print(News)
+
+# changing the format of dates
+from datetime import datetime
+for i in range(len(Date)):
+    day = datetime.strptime(Date[i], '%Y-%m-%d')
+    Date[i] = day.strftime('%d-%m-%Y')
+print(Date)
+
+# adding the dates and news to the file
+import pandas as pd
+data = pd.DataFrame(index = [i+1 for i in range(len(articles))], columns = ['Date', 'News'])
+data['News'] = News
+data['Date'] = Date
+
+# load the already extracted dataset and updating the dataset
+news = pd.read_csv("F:\\minorproject-2\\newssentiment\\mynews.csv")
+news.to_csv("F:\\minorproject-2\\newssentiment\\mynews.csv", index = False)

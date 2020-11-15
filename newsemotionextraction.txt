@@ -1,0 +1,81 @@
+# loading the news dataset and fetching the news articles
+import pandas as pd
+data = pd.read_csv("F:\\minorproject-2\\newssentiment\\mynews.csv")
+news = data['News'].values
+
+# fetching the polarities of news healines, poitive, negative and neutral
+from nltk.sentiment.vader import SentimentIntensityAnalyzer as SIA
+sia = SIA()
+results = []
+for i in range(len(news)):
+    pol_score = sia.polarity_scores(news[i])
+    pol_score['headline'] = news[i]
+    results.append(pol_score)
+neg = []
+neu = []
+pos = []
+for i in range(len(results)):
+    neg.append(results[i]['neg'])
+    neu.append(results[i]['neu'])
+    pos.append(results[i]['pos'])
+
+# adding the sentiment of news articles to csv file
+data['Negative'] = neg
+data['Neutral'] = neu
+data['Positive'] = pos
+
+# storing the sentiment into csv file
+data.to_csv("F:\\minorproject-2\\newssentiment\\mynews.csv", index = False)
+
+# opening the final file to append the final emotion extracted from the news
+news = pd.read_csv("F:\\minorproject-2\\newssentiment\\mynews.csv")
+price = pd.read_csv("F:\\minorproject-2\\newssentiment\\AAPL_shortened.csv")
+
+# extracting the previous date of the stock price we have, in case it is a weekday between Tuesday to Thursday the dates would of the previous date, in case of Monday the dates would be corresponding to Friday Saturday and Sunday.
+from datetime import datetime
+from datetime import timedelta
+sdate = price['Date'].values
+ndate = []
+for i in range(len(sdate)):
+    day = datetime.strptime(sdate[i], '%d-%m-%Y')
+    sdate[i] = day.date()
+sdate
+
+# computing the final emotion of the news
+import numpy as np
+emotion = []
+for i in range(len(sdate)):
+    ndate = []
+    if(i == 0):
+        day = sdate[0] - timedelta(days = 1)
+        ndate.append(day.strftime('%d-%m-%Y'))
+    if(sdate[i] != sdate[i-1]):
+        sd = sdate[i-1]
+        ed = sdate[i] - timedelta(days = 1)
+        delta = ed - sd
+        for j in range(delta.days + 1):
+            day = sd + timedelta(days=j)
+            ndate.append(day.strftime('%d-%m-%Y'))
+    print(ndate)
+    if(len(ndate) == 1):
+        a = data.loc[data['Date'] == ndate[0]]
+    elif(len(ndate) == 2):
+        a = data.loc[(data['Date'] == ndate[0]) | (data['Date'] == ndate[1])]
+    elif(len(ndate) == 3):
+        a = data.loc[(data['Date'] == ndate[0]) | (data['Date'] == ndate[1]) | (data['Date'] == ndate[2])]
+    elif(len(ndate) == 4):
+        a = data.loc[(data['Date']==ndate[0]) | (data['Date']==ndate[1]) | (data['Date']==ndate[2]) | (data['Date']==ndate[3])]
+    count = a.shape[0]
+    b = a['Negative'].values
+    c = a['Positive'].values
+    neg_score = np.sum(b)
+    pos_score = np.sum(c)
+    if(neg_score > pos_score):
+        emotion.append('%.2f'%(0-neg_score))
+    else:
+        emotion.append('%.2f'%pos_score)
+emotion
+
+# appending the emotions to the csv file
+price['Emotion'] = emotion
+price.to_csv("F:\\minorproject-2\\newssentiment\\AAPL_shortened.csv", index = False)
