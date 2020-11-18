@@ -1,3 +1,4 @@
+#compiling the model
 # importing the dataset and libraries
 import pandas as pd
 data = pd.read_csv("F:\\minorproject-2\\newssentiment\\AAPL_shortened.csv")
